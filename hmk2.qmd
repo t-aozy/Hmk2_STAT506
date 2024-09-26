@@ -1,0 +1,415 @@
+---
+title: "Hmk2"
+anthor: "Ziyi Tao"
+format: 
+  html:
+    code-fold: true
+    code-tools: true
+    embed-resources: true
+toc: true
+---
+
+## Problem 1 -Dice Game
+
+## a. 4 Versions
+
+### a.1 Version 1_loop
+
+```{r}
+#' play_dice_1
+#' use loop to output the total winning points after several rolls
+#' @param x total number of rolls
+#' @param seed control randomness, default value is null
+#' @return final winning points
+play_dice_1 <- function(x, seed = NULL){
+  
+  winnings <- 0
+  
+  # if seed is not null, set seed
+  if(is.null(seed) == FALSE){
+    set.seed(seed)
+  }
+  # Randomly get x results from the 6-side dice
+  numbers <- sample(1:6, x, replace = TRUE)
+  for(i in 1:x){
+    number <- numbers[i]
+    if(number == 3 | number == 5){
+      winnings <- winnings + number*2 - 2
+    }else{
+      winnings <- winnings - 2
+    }
+  }
+  return(winnings)
+  
+}
+```
+
+### a.2 Version 2_using built-in R vectorized functions
+
+I use ifelse(), sum() two verctorized functions to form the function.
+
+```{r}
+#' play_dice_2
+#' use ifelse, sum to output the total winning points after several rolls
+#' @param x total number of rolls
+#' @param seed control randomness, default value is null
+#' @return final winning points
+play_dice_2 <- function(x, seed = NULL){
+  # if seed is not null, set seed
+  if(is.null(seed) == FALSE){
+    set.seed(seed)
+  }
+  numbers <- sample(1:6, x, replace = TRUE)
+  winning_each <- ifelse((numbers == 3 | numbers == 5), numbers*2-2, -2)
+  return( sum(winning_each))
+}
+```
+
+### a.3 Version 3_using table()
+
+```{r}
+#' play_dice_3
+#' @param x total number of rolls
+#' @param seed control randomness
+#' @return final winning points
+play_dice_3 <- function(x, seed = NULL){
+  # if seed is not null , set seed
+  if(is.null(seed)==FALSE){
+    set.seed(seed)
+  }
+  numbers <- sample(1:6, x, replace = TRUE)
+  
+  # use table
+  ta <- table(numbers)
+  winning_points <- 0
+  for(i in 1:length(ta)){
+    if(names(ta)[i] %in% c("1", "2", "4", "6")){
+      winning_points <- winning_points-2*ta[i]
+    }
+    else{
+      winning_points <- winning_points+(as.integer(names(ta)[i])*2-2)*ta[i]
+    }
+  }
+  return(winning_points)
+}
+
+```
+
+### a.4 Version 4\_ apply()
+
+```{r}
+#' apply_funct
+#' function to apply towawrd each roll, if the number of dice is 3/5, return 
+#' winning points (2*3/5) - cost for each round (-2)
+#' @param x roll number
+#' @return winning points for a specific round
+apply_funct <- function(x){
+  if(x == 3 | x == 5){
+    return (2*x-2)
+  }else{
+    return (-2)
+  }
+}
+#' play_dice_4
+#' use mapply() to output the total winning points after several rolls
+#' @param x total number of rolls
+#' @param seed control randomness, default value is null
+#' @return final winning points
+play_dice_4 <- function(x, seed = NULL){
+  # generate roll results
+  if(is.null(seed) == FALSE){
+    set.seed(seed)
+  }
+  numbers <- sample(1:6, x, replace = TRUE)
+  
+  # use apply
+  apply_num <- mapply(apply_funct, numbers)
+  return (sum(apply_num))
+  
+}
+```
+
+## b.  Demonstrate all versions work
+
+For each 3-roll games and 3000-roll games of version1 to version4, I repeated 100 times, for the 3-roll games result, I used table() to show the distribution of the results; For the3000-roll game result, I used histogram.
+
+### b.1 Version 1
+
+```{r}
+table(mapply(play_dice_1, rep(3, 100)))
+```
+
+```{r}
+hist(mapply(play_dice_1, rep(3000, 100)), 
+     main = "Results of 3000 rolls [V1]",
+     xlab = "Total Winnings")
+```
+
+### b.2 Version 2
+
+```{r}
+table(mapply(play_dice_2, rep(3, 100)))
+```
+
+```{r}
+hist(mapply(play_dice_2, rep(3000, 100)), 
+     main = "Results of 3000 rolls [V2]",
+     xlab = "Total Winnings")
+```
+
+### b.3 Version 3
+
+```{r}
+table(mapply(play_dice_3, rep(3, 100)))
+```
+
+```{r}
+hist(mapply(play_dice_4, rep(3000, 100)), 
+     main = "Results of 3000 rolls [V3]", 
+     xlab = "Total Winnings")
+```
+
+### b.4 Version 4
+
+```{r}
+table(mapply(play_dice_4, rep(3, 100)))
+```
+
+```{r}
+hist(mapply(play_dice_4, rep(3000, 100)), 
+     main = "Results of 3000 rolls [V4]", 
+     xlab = "Total Winnings")
+```
+
+## c. Demonstrate that the four versions give the same result.
+
+Seed is used to control randomization.
+
+I used 6 seeds : 1001, 1002, 1003, 1004, 1005, 1006 to test the consistence of the results. According to the result, we know that the four versions give the same result.
+
+### c.1 Test with 3 rolls
+
+```{r}
+for(seed in 1001:1006){
+  cat(
+    "Set seed = ", seed, "\n",
+    "Result of Version 1:", play_dice_1(3, seed), "\n",
+    "Result of Version 2:", play_dice_2(3, seed), "\n",
+    "Result of Version 3:", play_dice_3(3, seed), "\n",
+    "Result of Version 4:", play_dice_4(3, seed), "\n",
+    "\n"
+  )
+}
+
+```
+
+### c.2 Test with 3000 rolls
+
+```{r}
+for(seed in 1001:1006){
+  cat(
+    "Set seed = ", seed, "\n",
+    "Result of Version 1:", play_dice_1(3000, seed), "\n",
+    "Result of Version 2:", play_dice_2(3000, seed), "\n",
+    "Result of Version 3:", play_dice_3(3000, seed), "\n",
+    "Result of Version 4:", play_dice_4(3000, seed), "\n",
+    "\n"
+  )
+}
+```
+
+## d. microbenchmark
+
+### d.1 1000 rolls
+
+```{r}
+library(DT)
+library(microbenchmark)
+
+microbenchmark(
+    play_dice_1(1000),
+    play_dice_2(1000),
+    play_dice_3(1000),
+    play_dice_4(1000)
+  )
+
+
+
+```
+
+### d.2 100000 rolls
+
+```{r}
+
+microbenchmark(
+  play_dice_1(100000),
+  play_dice_2(100000),
+  play_dice_3(100000),
+  play_dice_4(100000)
+)
+
+
+```
+
+According to the microbenchmark result, we learned that when there is a low input, there is not so much differences in terms of running time compare to a large input. However, we could still discover that version2, which uses built-in R vectorized functions has the fastest running speed, this is the same when the input is big, showing that vectorized function could increase the speed by operating in the compiled language C. Second, when the input is small, our result shows that using a loop(Version 1) is faster than using table()(Version 3), however, when the input increase, using table() is significantly faster than using a loop, this is because table() decreases the length of the loop when the input is large. Third, when using apply(), we gets the lowest running speed both in small input and large input, this is probably because that apply family actually contain implicit loops and it also takes time to call apply functions.
+
+## e. Fair Game
+
+If this is a fair game, no matter how many rolls the player choose, the probability of winning more than \$0 should be around 0.5. Thus, I choose 1 roll game to 50 rolls game, simulated each game 10000 times, and show the estimated probability of winning more than \$0 for each game. According to our simulation, as the number of rolls increases, the proportion of winning more than \$0 quickly exceed 0.5. Therefore, this is not a fair game.
+
+```{r}
+
+#' prob
+#' @param x a vector that contains winning points of 10000 rounds of a n-roll game  
+#' @return probability/proportion that winning points >0
+prob <- function(x){
+  nrow1 <- length(x[x>0])
+  nrow2 <- length(x)
+  return (nrow1/nrow2)
+}
+
+
+
+# build test dataset, from 1-roll game to 50-roll game, each repeat 10000 times.
+test_set <- rep(1:50, each = 10000)
+test_res <- mapply(play_dice_2, test_set)
+
+# form a data frame
+res <- data.frame(cbind(test_set, test_res))
+names(res) <- c("rolls", "points")
+plot(tapply(res$points, res$rolls, prob), 
+     xlab = "Rolls", ylab = "Probability of points>0",
+     main = "Monte Carlo Estimation")
+
+```
+
+# Problem 2 -Linear Regresson
+
+## a. Import and rename columns
+
+```{r}
+# load data
+data <- read.csv("D:/cars.csv")
+names(data) <- c("height", "length", "width", "driveline", "engine_type",
+                 "hybrid", "gears", "transmission", "city_mpg", "fuel",
+                 "highway_mpg", "classification", "id", "make", "year_model",
+                 "year_release", "horsepower", "torque")
+datatable(data)
+```
+
+## b. Restrict data
+
+After data restriction, we get 4591 rows.
+
+```{r}
+data <- data[data$fuel == "Gasoline",]
+datatable(data)
+```
+
+## c. Distribution
+
+I first use scatter plot to check whether the relationship between toque and highway gas mileage is linear, by checking the distribution of highway gas mileage, it seems that the data points do not locate on a line, so I choose log transformation, as is shown in the second plot, when I get log value of both toque and highway_mpg, the relation seems linear.
+
+```{r}
+# show the relationship between highway_mpg and torque
+plot(x = data$torque, y = data$highway_mpg, xlab = "Torque",
+     ylab = "Highway mpg", main = "Torque x High Way Mpg")
+
+# transformation
+data$log_torque <- mapply(log, data$torque)
+data$log_highway_mpg <- mapply(log, data$highway_mpg)
+plot(x = data$log_torque, y = data$log_highway_mpg, xlab = "Torque(log)",
+     ylab = "Highway mpg(log)", main = "Torque x High Way Mpg(log)")
+
+
+
+
+```
+
+## d. Fit models
+
+From the result of c, I choose log value of MPG on the highway and also log value of torque.
+
+According to the regression result, the relationship of torque and MPG on the highway can be interpreted as:
+
+For two cars with the same height, length, width, horsepower and release year, when the torque of the engine in one car improved by 1% , the expected distance the car can cover per gallen on highways is estimated to be 0.67% less than the other. A 1% increase in torque is associated with -0.67% increase in highway mpg.
+
+```{r}
+# turen release year variable into factor
+data$year_release <- as.factor(data$year_release)
+
+# build the predicting model
+model <- log_highway_mpg ~ log_torque + horsepower + height + 
+                        length + width + year_release
+
+# show the result
+summary(lm(model, data))
+
+
+```
+
+## e. Interaction between torque and highway MPG
+
+In order to choose reasonable highway_mpg value and torque value, I use summary() to examine the distribution of both torque and horsepower. In terms of torque, I choose c(90, 170, 255, 330, 600), which are located near the mean, 1st quarter, median, 3rd quarter and max of the total data. In terms of horsepower, I choose c(180, 260, 400), which are located near 1st quarter, median, and 3rd quarter of the data.
+
+```{r}
+summary(data$torque)
+summary(data$horsepower)
+```
+
+The refitted model is shown below.
+
+```{r}
+# new fitted model
+model_inter <- highway_mpg ~ torque*horsepower + height + 
+                        length + width + year_release
+
+# regression result
+summary(lm(model_inter, data = data))
+
+
+```
+
+The interaction plot is shown below, according to the plot and both the regression result above, keeping all the other variables equal , when torque improve by 1 lb/feet, cars with greater horsepower will get a less decrease in the mpg on highways.
+
+```{r}
+# interaction plot
+library(emmeans)
+emmip(lm(model_inter, data = data), 
+      horsepower ~ torque, 
+      at = list(horsepower = c(180, 260, 400), 
+                torque = c(90, 170, 255, 330, 600)))
+```
+
+To verify the relation again, I used log value of both highway_mpg and torque to fit another model, I choose log_torque value 4, 5, 6, 7 according to the summary of data. I got the same conclusion as before.
+
+```{r}
+
+summary(data$log_torque)
+
+model_inter_1 <- log_highway_mpg ~ log_torque*horsepower + height + 
+                        length + width + year_release
+
+summary(lm(model_inter, data))
+
+emmip(lm(model_inter_1, data = data), 
+      horsepower ~ log_torque, 
+      at = list(horsepower = c(180, 260, 400), 
+                log_torque = c(4, 5, 6, 7)))
+```
+
+## f. Manually calculate 
+
+As is shown below, we have same result with that in d.
+
+```{r}
+# generate the design matrix
+X <- model.matrix(model, data = data)
+
+# extract y values
+y <- data$log_highway_mpg
+
+# calculate estimates of beta
+beta_hat <- solve(t(X)%*%X)%*%t(X)%*%y
+beta_hat
+```
